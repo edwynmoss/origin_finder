@@ -39,14 +39,22 @@ class TestResult:
 class OriginFinder:
     """Main class for finding origin servers"""
     
-    def __init__(self, domain: str, timeout: int = 5, threads: int = 10, filter_cdn: bool = True):
+    def __init__(self, domain: str, timeout: int = 5, threads: int = 10, filter_cdn: bool = True, proxy: str = None):
         self.domain = domain
         self.timeout = timeout
         self.threads = threads
         self.filter_cdn = filter_cdn
+        self.proxy = proxy
         self.baseline_size = None
         self.session = requests.Session()
         self.session.verify = False
+        
+        # Configure proxy if provided
+        if self.proxy:
+            self.session.proxies = {
+                'http': self.proxy,
+                'https': self.proxy
+            }
         
         # CDN IP ranges to filter
         self.cdn_ranges = [
@@ -402,6 +410,11 @@ Examples:
         help='Disable CDN filtering (show all IPs including CDN)'
     )
     
+    parser.add_argument(
+        '--proxy',
+        help='Proxy URL (e.g., http://127.0.0.1:8080 for Burp Suite)'
+    )
+    
     args = parser.parse_args()
     
     # Collect IPs from various sources
@@ -425,10 +438,13 @@ Examples:
     print(f"[*] Testing {len(ip_list)} IP(s)")
     print(f"[*] Timeout: {args.timeout}s | Threads: {args.threads}")
     print(f"[*] CDN Filtering: {'Disabled' if args.no_filter else 'Enabled'}")
+    if args.proxy:
+        print(f"[*] Proxy: {args.proxy}")
     if args.csv:
         print(f"[*] CSV output: {args.csv}")
     
-    finder = OriginFinder(args.domain, timeout=args.timeout, threads=args.threads, filter_cdn=not args.no_filter)
+    finder = OriginFinder(args.domain, timeout=args.timeout, threads=args.threads, 
+                         filter_cdn=not args.no_filter, proxy=args.proxy)
     finder.scan_ips(ip_list, csv_output=args.csv)
     
     print("\n[*] Scan complete")

@@ -7,6 +7,7 @@ A powerful tool to discover origin servers behind CDN/proxy services (Cloudflare
 - **Smart CDN Filtering** - Automatically filters out CDN IPs (Cloudflare, AWS, Akamai, Fastly)
 - **Mass Scanning** - Test hundreds or thousands of IPs concurrently
 - **IP Range Support** - Scan entire subnets with CIDR or range notation
+- **Burp Suite Integration** - Route traffic through proxy for inspection
 - **Tabulated Output** - Clean, organized results display
 - **CSV Export** - Save results for analysis
 - **Origin Verification** - Deep verification tool to confirm origin servers
@@ -74,6 +75,12 @@ py origin_finder_cloudflare.py --domain example.com --single-domain-set ips.txt 
 
 # Increase timeout for slow servers
 py origin_finder_cloudflare.py --domain example.com --single-domain-set ips.txt --timeout 10
+
+# Route traffic through Burp Suite proxy
+py origin_finder_cloudflare.py --domain example.com --single-domain-set ips.txt --proxy http://127.0.0.1:8080
+
+# Combine with CSV export for full analysis
+py origin_finder_cloudflare.py --domain example.com --ip-range 192.168.1.0/24 --proxy http://127.0.0.1:8080 --csv results.csv
 ```
 
 ### Origin Verification
@@ -89,6 +96,9 @@ py verify_origin.py --domain example.com --ip 192.168.1.100 --protocol http
 
 # Verify multiple IPs
 py verify_origin.py --domain example.com --ip 1.2.3.4 --ip 5.6.7.8
+
+# Route verification through Burp Suite
+py verify_origin.py --domain example.com --ip 192.168.1.100 --proxy http://127.0.0.1:8080
 ```
 
 ## 📊 Example Output
@@ -158,6 +168,39 @@ py verify_origin.py --domain example.com --ip 1.2.3.4 --ip 5.6.7.8
 ================================================================================
 ```
 
+## 🔧 Burp Suite Integration
+
+Route all traffic through Burp Suite for inspection and manipulation:
+
+### Setup
+1. Start Burp Suite
+2. Configure proxy listener (default: `127.0.0.1:8080`)
+3. Add `--proxy http://127.0.0.1:8080` to your command
+
+### Benefits
+- **Inspect Requests**: See all HTTP/HTTPS requests and responses
+- **Modify Headers**: Manipulate Host headers in real-time
+- **Intercept Traffic**: Pause and edit requests before sending
+- **Save Results**: Keep full request/response history
+- **Repeater**: Manually test individual IPs
+
+### Example Workflow
+```bash
+# 1. Start Burp Suite on 127.0.0.1:8080
+
+# 2. Run scanner through Burp
+py origin_finder_cloudflare.py --domain example.com --ip-range 192.168.1.0/24 \
+    --proxy http://127.0.0.1:8080 --csv results.csv
+
+# 3. Verify findings in Burp
+py verify_origin.py --domain example.com --ip 192.168.1.100 \
+    --proxy http://127.0.0.1:8080
+
+# 4. Analyze traffic in Burp's HTTP history
+```
+
+**Note**: SSL/TLS verification is automatically disabled when using proxies to allow Burp's certificate interception.
+
 ## 🔍 Finding IPs to Test
 
 ### 1. Historical DNS Records
@@ -189,6 +232,7 @@ Look for subdomains not behind CDN (FTP, mail, direct, origin, etc.)
 | `--threads` | - | Number of concurrent threads | 10 |
 | `--csv` | `-c` | Save results to CSV file | - |
 | `--no-filter` | - | Disable CDN filtering | False |
+| `--proxy` | - | Proxy URL (e.g., Burp Suite) | - |
 
 ### verify_origin.py
 
@@ -198,6 +242,7 @@ Look for subdomains not behind CDN (FTP, mail, direct, origin, etc.)
 | `--ip` | `-i` | IP address to verify (repeatable) | - |
 | `--protocol` | `-p` | Protocol (http/https) | https |
 | `--timeout` | `-t` | Request timeout in seconds | 10 |
+| `--proxy` | - | Proxy URL (e.g., Burp Suite) | - |
 
 ## 🛡️ Legal Notice
 

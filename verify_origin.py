@@ -28,11 +28,19 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class OriginVerifier:
     """Verify if an IP is the actual origin server"""
     
-    def __init__(self, domain: str, timeout: int = 10):
+    def __init__(self, domain: str, timeout: int = 10, proxy: str = None):
         self.domain = domain
         self.timeout = timeout
+        self.proxy = proxy
         self.session = requests.Session()
         self.session.verify = False
+        
+        # Configure proxy if provided
+        if self.proxy:
+            self.session.proxies = {
+                'http': self.proxy,
+                'https': self.proxy
+            }
         
     def get_legitimate_response(self, protocol: str = "https") -> Dict[str, Any]:
         """Get the legitimate response from the domain (through CDN)"""
@@ -351,9 +359,17 @@ Examples:
         help='Request timeout in seconds (default: 10)'
     )
     
+    parser.add_argument(
+        '--proxy',
+        help='Proxy URL (e.g., http://127.0.0.1:8080 for Burp Suite)'
+    )
+    
     args = parser.parse_args()
     
-    verifier = OriginVerifier(args.domain, timeout=args.timeout)
+    if args.proxy:
+        print(f"[*] Using proxy: {args.proxy}\n")
+    
+    verifier = OriginVerifier(args.domain, timeout=args.timeout, proxy=args.proxy)
     
     for ip in args.ip:
         verifier.verify(ip, protocol=args.protocol)
