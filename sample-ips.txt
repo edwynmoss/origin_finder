@@ -1,0 +1,9 @@
+# Sample IP addresses for testing
+# Add your target IPs here, one per line
+# Comments starting with # are ignored
+
+# Example IPs (replace with your targets):
+# 192.168.1.100
+# 10.0.0.50
+# 172.16.0.10
+
